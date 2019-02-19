@@ -1,0 +1,49 @@
+This file contains the instructions to set up a kafka data pipeline
+
+Start ZooKeeper:
+Open a new terminal and type the following command −
+bin/zookeeper-server-start.sh config/zookeeper.properties
+
+To start Kafka Broker, type the following command −
+bin/kafka-server-start.sh config/server.properties
+
+We will be setting up a single node configuration for simplicity. 
+
+Creating a Kafka Topic − Kafka provides a command line utility named kafka-topics.sh to create topics on the server. Open new terminal and type the below command
+
+bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1   
+--partitions 1 --topic test-topic
+This tells us that zookeeper is running on localhost server on port 2181. 
+Topic Replication is the process to offer fail-over capability for a topic. Replication factor defines the number of copies of a topic in a Kafka cluster.
+Since we are running a single node configuration, the number of partitions will be 1.
+Once the topic has been created, you can get the notification in Kafka broker terminal window and the log for the created topic specified in “/tmp/kafka-logs/“ in the config/server.properties file.
+
+Start Producer to Send Messages:
+
+bin/kafka-console-producer.sh --broker-list localhost:9092 --topic test-topic
+
+Broker-list − The list of brokers that we want to send the messages to. In this case we only have one broker. The Config/server.properties file contains broker port id, since we know our broker is listening on port 9092, so you can specify it directly.
+The producer will wait on input from stdin and publishes to the Kafka cluster. 
+
+We will be writing a shell script to automate the network packet capture part:
+There are 2 ways of doing this 
+First script is as follows
+
+#!/bin/bash/
+sudo tcpdump -l | bin/kafka-console-producer.sh --broker-list localhost:9092 --topic test-topic
+
+Second script:
+
+#!/bin/bash/
+sudo tcpdump -l -immediate-mode >  tcpdump_packet_capture.txt
+sleep 5
+bin/kafka-console-producer.sh --broker-list localhost:9092 --topic test-topic < tcpdump_packet_capture.txt
+
+To see the messages in the test-topic,
+Start Consumer to Receive Messages
+Similar to producer, the default consumer properties are specified in config/consumer.proper-ties file. Open a new terminal and type the below for consuming messages.
+
+bin/kafka-console-consumer.sh --zookeeper localhost:2181 --topic test-topic --from-beginning
+
+Finally, you are able to enter messages(network capture packets) from the producer’s terminal and see them appearing in the consumer’s terminal.
+
